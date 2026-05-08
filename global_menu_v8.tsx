@@ -1,7 +1,43 @@
 import { useState, useRef, useEffect, useMemo, useCallback, memo } from "react";
 
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+interface MenuItem {
+  rank: number;
+  local: string;
+  english: string;
+  prep: string;
+}
+
+interface Country {
+  code: string;
+  name: string;
+  lang: string;
+  color: string;
+  accent: string;
+}
+
+/** Minimal dish style returned by getDishStyle (icon + palette). */
+interface DishStyle {
+  icon: string;
+  bg: string;
+  accent: string;
+}
+
+interface DishType extends DishStyle {
+  keys: string[];
+}
+
+interface RecipeDetail {
+  description: string;
+  ingredients: string[];
+  prep_time: string;
+  cook_time: string;
+  steps: string[];
+}
+
 // ── Fonts: Cormorant Garamond (display) + Inter (body) ───────────────────────
-function useFonts() {
+function useFonts(): void {
   useEffect(() => {
     const l = document.createElement("link");
     l.rel = "stylesheet"; l.media = "print";
@@ -35,7 +71,7 @@ const T = {
 };
 
 // ── Dish type classifier ──────────────────────────────────────────────────────
-const DISH_TYPES = [
+const DISH_TYPES: DishType[] = [
   { keys:["soup","broth","pho","tom yum","chowder","gazpacho","borscht","bouillabaisse","bisque","rosół","potage"], icon:"🍜", bg:"#1a1a1a", accent:"#c9a96e" },
   { keys:["pizza","flatbread","pissaladière","focaccia"], icon:"🍕", bg:"#1a1a1a", accent:"#c9a96e" },
   { keys:["pasta","carbonara","lasagne","lasagna","gnocchi","spaghetti","penne","tagliatelle","cacio e pepe","noodle","mì","ramen","maultaschen","spätzle","pierogi","dumpling","ravioli","kluski","wonton"], icon:"🍝", bg:"#1a1a1a", accent:"#c9a96e" },
@@ -56,20 +92,20 @@ const DISH_TYPES = [
   { keys:["lamb","mutton","cordero","baranina","羊"], icon:"🐑", bg:"#1a1a1a", accent:"#c9a96e" },
   { keys:["stew","braise","hotpot","casserole","ragù","bigos","feijoada","cocido","goulash","火锅","lẩu"], icon:"🍲", bg:"#1a1a1a", accent:"#c9a96e" },
 ];
-const styleCache = new Map();
-function getDishStyle(local, english) {
+const styleCache = new Map<string, DishStyle>();
+function getDishStyle(local: string, english: string): DishStyle {
   const key = `${local}|${english}`;
-  if (styleCache.has(key)) return styleCache.get(key);
+  if (styleCache.has(key)) return styleCache.get(key)!;
   const text = `${(english||"").toLowerCase()} ${(local||"").toLowerCase()}`;
   for (const t of DISH_TYPES) {
     if (t.keys.some(k => text.includes(k))) { styleCache.set(key, t); return t; }
   }
-  const fb = { icon:"🍽️", bg:"#1a1a1a", accent:"#c9a96e" };
-  styleCache.set(key, fb); return fb;
+  const fallback: DishStyle = { icon:"🍽️", bg:"#1a1a1a", accent:"#c9a96e" };
+  styleCache.set(key, fallback); return fallback;
 }
 
 // ── Countries ─────────────────────────────────────────────────────────────────
-const COUNTRIES = [
+const COUNTRIES: Country[] = [
   { code:"FR", name:"France",         lang:"French",         color:"#002395", accent:"#ED2939" },
   { code:"IT", name:"Italy",          lang:"Italian",        color:"#008C45", accent:"#CE2B37" },
   { code:"DE", name:"Germany",        lang:"German",         color:"#1a1a1a", accent:"#DD0000" },
@@ -83,10 +119,9 @@ const COUNTRIES = [
   { code:"GB", name:"United Kingdom", lang:"English",        color:"#012169", accent:"#C8102E" },
   { code:"IN", name:"India",          lang:"Hindi/Regional", color:"#FF9933", accent:"#138808" },
 ];
-const WC = ["#1a1a1a","#2a2a2a","#3a3a3a","#c9a96e","#8b6914","#d4a853","#444","#555","#666","#b8902a","#333","#777"];
 
 // ── Menu data ─────────────────────────────────────────────────────────────────
-const MENU_DATA = {
+const MENU_DATA: Record<string, MenuItem[]> = {
   FR:[
     {rank:1,local:"Steak Frites",english:"Steak and Chips",prep:"10 mins"},{rank:2,local:"Croque Monsieur",english:"Ham and Cheese Toast",prep:"10 mins"},{rank:3,local:"Soupe à l'Oignon",english:"French Onion Soup",prep:"15 mins"},{rank:4,local:"Salade Niçoise",english:"Niçoise Salad",prep:"20 mins"},{rank:5,local:"Quiche Lorraine",english:"Quiche Lorraine",prep:"20 mins"},{rank:6,local:"Bouillabaisse",english:"Seafood Stew",prep:"30 mins"},{rank:7,local:"Coq au Vin",english:"Chicken in Wine",prep:"20 mins"},{rank:8,local:"Confit de Canard",english:"Duck Confit",prep:"15 mins"},{rank:9,local:"Croissant",english:"Croissant",prep:"5 mins"},{rank:10,local:"Crêpes",english:"Pancakes",prep:"10 mins"},{rank:11,local:"Ratatouille",english:"Ratatouille",prep:"20 mins"},{rank:12,local:"Escargots",english:"Snails in Garlic Butter",prep:"15 mins"},{rank:13,local:"Foie Gras",english:"Foie Gras",prep:"10 mins"},{rank:14,local:"Moules Marinières",english:"Mussels in White Wine",prep:"10 mins"},{rank:15,local:"Boeuf Bourguignon",english:"Beef Bourguignon",prep:"30 mins"},{rank:16,local:"Tarte Tatin",english:"Upside-down Apple Tart",prep:"20 mins"},{rank:17,local:"Crème Brûlée",english:"Burnt Cream",prep:"15 mins"},{rank:18,local:"Soufflé au Fromage",english:"Cheese Soufflé",prep:"20 mins"},{rank:19,local:"Tartiflette",english:"Potato and Cheese Bake",prep:"20 mins"},{rank:20,local:"Cassoulet",english:"Bean and Meat Casserole",prep:"30 mins"},{rank:21,local:"Gratin Dauphinois",english:"Potato Gratin",prep:"20 mins"},{rank:22,local:"Vichyssoise",english:"Cold Leek and Potato Soup",prep:"20 mins"},{rank:23,local:"Île Flottante",english:"Floating Island Dessert",prep:"20 mins"},{rank:24,local:"Madeleines",english:"Shell-shaped Cakes",prep:"15 mins"},{rank:25,local:"Pain Perdu",english:"French Toast",prep:"10 mins"},{rank:26,local:"Blanquette de Veau",english:"White Veal Stew",prep:"20 mins"},{rank:27,local:"Pot-au-Feu",english:"Boiled Beef and Vegetables",prep:"30 mins"},{rank:28,local:"Clafoutis",english:"Cherry Batter Pudding",prep:"15 mins"},{rank:29,local:"Gougères",english:"Cheese Puffs",prep:"20 mins"},{rank:30,local:"Profiteroles",english:"Cream Puffs",prep:"30 mins"},{rank:31,local:"Mousse au Chocolat",english:"Chocolate Mousse",prep:"20 mins"},{rank:32,local:"Tarte aux Fraises",english:"Strawberry Tart",prep:"25 mins"},{rank:33,local:"Galette Bretonne",english:"Buckwheat Pancake",prep:"10 mins"},{rank:34,local:"Pissaladière",english:"Onion and Anchovy Tart",prep:"20 mins"},{rank:35,local:"Salade Lyonnaise",english:"Lyon Salad with Lardons",prep:"15 mins"},{rank:36,local:"Bisque de Homard",english:"Lobster Bisque",prep:"30 mins"},{rank:37,local:"Soupe de Poisson",english:"Fish Soup",prep:"25 mins"},{rank:38,local:"Aligot",english:"Mashed Potato with Cheese",prep:"20 mins"},{rank:39,local:"Flamiche",english:"Leek Tart",prep:"20 mins"},{rank:40,local:"Terrine de Campagne",english:"Country Pâté",prep:"30 mins"},{rank:41,local:"Daube Provençale",english:"Provençal Beef Stew",prep:"30 mins"},{rank:42,local:"Tapenade",english:"Olive Paste",prep:"10 mins"},{rank:43,local:"Brioche",english:"Enriched Bread",prep:"30 mins"},{rank:44,local:"Millefeuille",english:"Napoleon Pastry",prep:"30 mins"},{rank:45,local:"Pâté en Croûte",english:"Pâté in Pastry",prep:"40 mins"},{rank:46,local:"Ficelle Picarde",english:"Ham and Mushroom Crêpe",prep:"20 mins"},{rank:47,local:"Brandade de Morue",english:"Salt Cod Brandade",prep:"20 mins"},{rank:48,local:"Quenelles de Brochet",english:"Pike Dumplings",prep:"30 mins"},{rank:49,local:"Veau Marengo",english:"Veal Stew with Tomatoes",prep:"25 mins"},{rank:50,local:"Soupe au Pistou",english:"Vegetable Soup with Basil",prep:"25 mins"},
   ],
@@ -125,20 +160,48 @@ const MENU_DATA = {
   ],
 };
 
-const recipeCache = new Map();
+/** In-memory recipe cache keyed by "{countryCode}:{dishRank}". Cleared on page reload. */
+const recipeCache = new Map<string, RecipeDetail>();
 
 // ── API ───────────────────────────────────────────────────────────────────────
-const AH = {"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
-async function apiFetch(prompt, maxTok) {
-  const res = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:AH,body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:maxTok,messages:[{role:"user",content:prompt}]})});
-  if(!res.ok){const e=await res.json().catch(()=>{});throw new Error(e?.error?.message||"HTTP "+res.status);}
-  return(await res.json()).content.map(b=>b.text||"").join("");
+// WARNING: calling the Anthropic API directly from the browser exposes your API
+// key and rate limits to all users. Move apiFetch to a backend/serverless
+// function before shipping to production.
+const API_HEADERS = {
+  "Content-Type": "application/json",
+  "anthropic-version": "2023-06-01",
+  "anthropic-dangerous-direct-browser-access": "true",
+};
+
+async function apiFetch(prompt: string, maxTok: number): Promise<string> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: API_HEADERS,
+    body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: maxTok, messages: [{ role: "user", content: prompt }] }),
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error((e as {error?: {message?: string}})?.error?.message || "HTTP " + res.status); }
+  return (await res.json()).content.map((b: {text?: string}) => b.text || "").join("");
 }
-function xj(txt){const s=txt.indexOf("{"),e=txt.lastIndexOf("}");if(s<0||e<0)throw new Error("No JSON");return JSON.parse(txt.slice(s,e+1));}
-function scaleIng(ings,srv){return ings.map(i=>i.replace(/(\d+(?:\.\d+)?)/g,m=>{const s=parseFloat(m)*srv/4;return s%1===0?s:parseFloat(s.toFixed(1));}));}
+
+/** Extracts the first complete JSON object from a string, tolerating markdown fences. */
+function extractJSON(txt: string): RecipeDetail {
+  const s = txt.indexOf("{"), e = txt.lastIndexOf("}");
+  if (s < 0 || e < 0) throw new Error("No JSON found in response");
+  return JSON.parse(txt.slice(s, e + 1)) as RecipeDetail;
+}
+
+function scaleIng(ings: string[], srv: number): string[] {
+  return ings.map(i => i.replace(/(\d+(?:\.\d+)?)/g, m => {
+    const scaled = parseFloat(m) * srv / 4;
+    return scaled % 1 === 0 ? String(scaled) : String(parseFloat(scaled.toFixed(1)));
+  }));
+}
 
 // ── Flag SVG ──────────────────────────────────────────────────────────────────
-const FlagSVG = memo(function FlagSVG({code,size=40}){
+interface FlagSVGProps { code: string; size?: number; }
+
+/** Renders an inline SVG flag for the given ISO 3166-1 alpha-2 country code. */
+const FlagSVG = memo(function FlagSVG({ code, size = 40 }: FlagSVGProps) {
   const s = {width:"100%",height:"100%"};
   if(code==="FR") return <svg viewBox="0 0 3 2" style={s}><rect width="1" height="2" fill="#002395"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#ED2939"/></svg>;
   if(code==="IT") return <svg viewBox="0 0 3 2" style={s}><rect width="1" height="2" fill="#009246"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#CE2B37"/></svg>;
@@ -159,9 +222,20 @@ const FlagSVG = memo(function FlagSVG({code,size=40}){
 });
 
 // ── Spin Wheel ────────────────────────────────────────────────────────────────
-function SpinWheel({ items, onResult, onClose, label="name" }) {
-  const cvs=useRef(null), ang=useRef(0), vel=useRef(0), raf=useRef(null);
-  const [spinning,setSpinning]=useState(false), [winner,setWinner]=useState(null);
+interface SpinWheelProps {
+  items: Array<Record<string, unknown>>;
+  onResult: (item: Record<string, unknown>) => void;
+  onClose: () => void;
+  label?: string;
+}
+
+/**
+ * Canvas-based spin wheel that randomly selects one item from the provided list.
+ * Calls onResult with the winning item once the wheel stops.
+ */
+function SpinWheel({ items, onResult, onClose, label = "name" }: SpinWheelProps) {
+  const cvs = useRef<HTMLCanvasElement>(null), ang = useRef(0), vel = useRef(0), raf = useRef<number>(0);
+  const [spinning, setSpinning] = useState(false), [winner, setWinner] = useState<Record<string, unknown> | null>(null);
   const n=items.length, arc=(2*Math.PI)/n;
   const draw=useCallback((a)=>{
     const c=cvs.current; if(!c) return;
@@ -222,7 +296,10 @@ function SpinWheel({ items, onResult, onClose, label="name" }) {
 }
 
 // ── Menu Card ─────────────────────────────────────────────────────────────────
-const MenuCard = memo(function MenuCard({item, onClick}){
+interface MenuCardProps { item: MenuItem; onClick: () => void; }
+
+/** Displays a single dish as a card with its emoji icon, local name, English translation, and prep time. */
+const MenuCard = memo(function MenuCard({ item, onClick }: MenuCardProps) {
   const {icon} = getDishStyle(item.local, item.english);
   const [hov,setHov] = useState(false);
   return(
@@ -243,35 +320,64 @@ const MenuCard = memo(function MenuCard({item, onClick}){
   );
 });
 
+// ── Ghost Button ─────────────────────────────────────────────────────────────
+interface GhostBtnProps { onClick: () => void; children: React.ReactNode; }
+
+/** Lightweight translucent nav button used across all screens. */
+function GhostBtn({ onClick, children }: GhostBtnProps) {
+  return (
+    <button onClick={onClick} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.18)",borderRadius:2,padding:"5px 14px",cursor:"pointer",fontSize:11,color:"rgba(255,255,255,0.7)",letterSpacing:"0.08em",whiteSpace:"nowrap",transition:"border-color 0.15s"}}>
+      {children}
+    </button>
+  );
+}
+
 // ── App ───────────────────────────────────────────────────────────────────────
-export default function App(){
+
+/**
+ * Global Menu Explorer — root application component.
+ *
+ * Three-screen SPA: home (country picker) → menu (dish grid) → dish (recipe detail).
+ * Recipes are fetched on demand from the Anthropic API and cached in memory for the
+ * session. See the WARNING comment near apiFetch before deploying to production.
+ */
+export default function App() {
   useFonts();
-  const [screen,setScreen]=useState("home");
-  const [country,setCountry]=useState(null);
-  const [dish,setDish]=useState(null);
-  const [detail,setDetail]=useState(null);
-  const [detailLoading,setDetailLoading]=useState(false);
-  const [diners,setDiners]=useState(4);
-  const [showCW,setShowCW]=useState(false);
-  const [showDW,setShowDW]=useState(false);
-  const [showShare,setShowShare]=useState(false);
-  const [copied,setCopied]=useState(false);
+  const [screen, setScreen] = useState<"home" | "menu" | "dish">("home");
+  const [country, setCountry] = useState<Country | null>(null);
+  const [dish, setDish] = useState<MenuItem | null>(null);
+  const [detail, setDetail] = useState<RecipeDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [diners, setDiners] = useState(4);
+  const [showCW, setShowCW] = useState(false);
+  const [showDW, setShowDW] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Tracks the cache key of the in-flight recipe request; used to discard stale responses.
+  const activeFetchRef = useRef<string | null>(null);
 
   const menu=useMemo(()=>country?(MENU_DATA[country.code]||[]):[],[country]);
   const {icon:dishIcon}=dish?getDishStyle(dish.local,dish.english):{icon:"🍽️"};
   const sc=useMemo(()=>detail?scaleIng(detail.ingredients,diners):[],[detail,diners]);
 
   const openCountry=useCallback((c)=>{setCountry(c);setScreen("menu");},[]);
-  const openDish=useCallback(async(d)=>{
-    setDish(d);setDetail(null);setDetailLoading(true);setScreen("dish");
-    const ck=`${country.code}:${d.rank}`;
-    if(recipeCache.has(ck)){setDetail(recipeCache.get(ck));setDetailLoading(false);return;}
-    try{
-      const raw=await apiFetch(`BBC Good Food style recipe for "${d.english}" (${d.local}) from ${country.name}. Return ONLY a JSON object, no markdown: {"description":"2 sentences","ingredients":["qty ingredient",...max 10],"prep_time":"X mins","cook_time":"X mins","steps":["step",...max 6]}`,1200);
-      const parsed=xj(raw);recipeCache.set(ck,parsed);setDetail(parsed);
-    }catch{setDetail({description:"Could not load recipe.",ingredients:[],prep_time:d.prep||"-",cook_time:"-",steps:[]});}
+  const openDish = useCallback(async (d: MenuItem) => {
+    setDish(d); setDetail(null); setDetailLoading(true); setScreen("dish");
+    const ck = `${country!.code}:${d.rank}`;
+    activeFetchRef.current = ck;
+    if (recipeCache.has(ck)) { setDetail(recipeCache.get(ck)!); setDetailLoading(false); return; }
+    try {
+      const raw = await apiFetch(`BBC Good Food style recipe for "${d.english}" (${d.local}) from ${country!.name}. Return ONLY a JSON object, no markdown: {"description":"2 sentences","ingredients":["qty ingredient",...max 10],"prep_time":"X mins","cook_time":"X mins","steps":["step",...max 6]}`, 1200);
+      // Discard response if the user navigated to a different dish while this was in flight.
+      if (activeFetchRef.current !== ck) return;
+      const parsed = extractJSON(raw); recipeCache.set(ck, parsed); setDetail(parsed);
+    } catch {
+      if (activeFetchRef.current !== ck) return;
+      setDetail({ description: "Could not load recipe.", ingredients: [], prep_time: d.prep || "-", cook_time: "-", steps: [] });
+    }
     setDetailLoading(false);
-  },[country]);
+  }, [country]);
 
   const shareUrl="https://claude.ai/artifacts";
   const shareText=country?`Explore authentic ${country.name} dishes — Global Menu Explorer`:"Explore authentic dishes from 12 countries — Global Menu Explorer";
@@ -282,14 +388,21 @@ export default function App(){
     {label:"Facebook",color:"#1877F2",href:`https://www.facebook.com/sharer/sharer.php?u=${encUrl}`},
     {label:"Email",color:"#444",href:`mailto:?subject=Global Menu Explorer&body=${encText}%20${encUrl}`},
   ];
-  function handleCopy(){try{const ta=document.createElement("textarea");ta.value=shareUrl;ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);setCopied(true);setTimeout(()=>setCopied(false),2200);}catch{}}
-
-  // ── Shared nav button style ───────────────────────────────────────────────
-  const GhostBtn = ({onClick,children})=>(
-    <button onClick={onClick} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.18)",borderRadius:2,padding:"5px 14px",cursor:"pointer",fontSize:11,color:"rgba(255,255,255,0.7)",letterSpacing:"0.08em",whiteSpace:"nowrap",transition:"border-color 0.15s"}}>
-      {children}
-    </button>
-  );
+  function handleCopy(): void {
+    const confirm = () => { setCopied(true); setTimeout(() => setCopied(false), 2200); };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl).then(confirm).catch(() => {});
+    } else {
+      // Fallback for contexts where the Clipboard API is unavailable.
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = shareUrl; ta.style.cssText = "position:fixed;opacity:0";
+        document.body.appendChild(ta); ta.select();
+        document.execCommand("copy"); document.body.removeChild(ta);
+        confirm();
+      } catch { /* clipboard unavailable */ }
+    }
+  }
 
   // ── Share modal ───────────────────────────────────────────────────────────
   function ShareModal(){return(
@@ -314,11 +427,11 @@ export default function App(){
     </div>
   );}
 
-  const bs={fontFamily:"'Inter',sans-serif",color:T.white,maxWidth:720,margin:"0 auto",background:T.black,minHeight:"100vh"};
+  const baseStyle = {fontFamily:"'Inter',sans-serif",color:T.white,maxWidth:720,margin:"0 auto",background:T.black,minHeight:"100vh"};
 
   // ── HOME ──────────────────────────────────────────────────────────────────
   if(screen==="home") return(
-    <div style={bs}>
+    <div style={baseStyle}>
       {showShare&&<ShareModal/>}
       {showCW&&<SpinWheel items={COUNTRIES} label="name" onResult={c=>{setShowCW(false);openCountry(c);}} onClose={()=>setShowCW(false)}/>}
 
@@ -368,7 +481,7 @@ export default function App(){
 
   // ── MENU ──────────────────────────────────────────────────────────────────
   if(screen==="menu") return(
-    <div style={bs}>
+    <div style={baseStyle}>
       {showShare&&<ShareModal/>}
       {showDW&&<SpinWheel items={menu} label="local" onResult={d=>{setShowDW(false);openDish(d);}} onClose={()=>setShowDW(false)}/>}
 
@@ -399,7 +512,7 @@ export default function App(){
 
   // ── DISH ──────────────────────────────────────────────────────────────────
   if(screen==="dish") return(
-    <div style={bs}>
+    <div style={baseStyle}>
       {showShare&&<ShareModal/>}
 
       {/* Header */}
@@ -458,7 +571,7 @@ export default function App(){
                 </select>
               </div>
             </div>
-            {sc.map((ing,i)=>(
+            {(sc ?? []).map((ing,i)=>(
               <div key={i} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"8px 0",borderBottom:i<sc.length-1?"1px solid #141414":"none"}}>
                 <span style={{width:4,height:4,borderRadius:"50%",background:T.gold,marginTop:7,flexShrink:0}}/>
                 <span style={{fontSize:14,color:T.muted,lineHeight:1.5,fontWeight:300}}>{ing}</span>
@@ -469,7 +582,7 @@ export default function App(){
           {/* Method */}
           <div>
             <p style={{fontSize:10,letterSpacing:"0.15em",textTransform:"uppercase",color:T.gold,margin:"0 0 1rem",paddingBottom:"0.75rem",borderBottom:"1px solid #1e1e1e"}}>Method</p>
-            {detail.steps.map((step,i)=>(
+            {(detail.steps ?? []).map((step,i)=>(
               <div key={i} style={{display:"flex",gap:16,marginBottom:"1.25rem",alignItems:"flex-start"}}>
                 <span className="fd" style={{fontSize:20,color:"#2a2a2a",flexShrink:0,lineHeight:1.2,minWidth:24,textAlign:"right"}}>{i+1}</span>
                 <p style={{fontSize:14,color:T.muted,margin:0,lineHeight:1.75,fontWeight:300,flex:1}}>{step.replace(/^Step \d+:\s*/i,"")}</p>

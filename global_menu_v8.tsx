@@ -534,7 +534,6 @@ export default function App() {
   // ── DISH ──────────────────────────────────────────────────────────────────
   if(screen==="dish") return(
     <div style={baseStyle}>
-{showShare&&<ShareModal/>}
 
       {/* Header */}
       <div style={{padding:"1.25rem 1.5rem",borderBottom:"1px solid #1e1e1e",display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,background:T.black,zIndex:10}}>

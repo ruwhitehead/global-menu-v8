@@ -160,6 +160,33 @@ const MENU_DATA: Record<string, MenuItem[]> = {
   ],
 };
 
+// ── Course classification ─────────────────────────────────────────────────────
+type Course = "starter" | "main" | "dessert";
+
+const DESSERT_KEYS = [
+  "cake","dessert","tiramisu","brulee","brûlée","pudding","tart","torte",
+  "gulab","churros","panna cotta","sticky rice","brigadeiro","halwa","kheer",
+  "jalebi","kulfi","rasmalai","strudel","flan","mousse","doughnut","candy",
+  "custard","sorbet","gelato","toffee","gingerbread","cheesecake","sponge",
+  "swiss roll","candied","sweet soup","corn cake","carrot cake","apple cake",
+  "plum cake","semolina","rice pudding","compote","batter in syrup",
+  "roll cake","coconut candy","glutinous rice","floating lotus","jelly",
+  "cream puff","napoleon pastry","mango sticky","puff","biscuit",
+];
+
+const STARTER_KEYS = [
+  "soup","broth","bisque","gazpacho","salad","bruschetta","tapenade",
+  "pâté","terrine","foie gras","prawn cocktail","escargot","snail",
+  "carpaccio","ceviche","antipasto","vichyssoise","potted",
+];
+
+function getCourse(dish: MenuItem): Course {
+  const text = dish.english.toLowerCase();
+  if (DESSERT_KEYS.some(k => text.includes(k))) return "dessert";
+  if (STARTER_KEYS.some(k => text.includes(k))) return "starter";
+  return "main";
+}
+
 /** In-session recipe cache keyed by "{countryCode}:{dishRank}". */
 const recipeCache = new Map<string, RecipeDetail>();
 
@@ -391,14 +418,14 @@ export default function App() {
   const activeFetchRef = useRef<string | null>(null);
   const [showCW, setShowCW] = useState(false);
   const [showDW, setShowDW] = useState(false);
-  const [showShare, setShowShare] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [courseFilter, setCourseFilter] = useState<Course | "all">("all");
 
   const menu=useMemo(()=>country?(MENU_DATA[country.code]||[]):[],[country]);
+  const filteredMenu=useMemo(()=>courseFilter==="all"?menu:menu.filter(d=>getCourse(d)===courseFilter),[menu,courseFilter]);
   const {icon:dishIcon}=dish?getDishStyle(dish.local,dish.english):{icon:"🍽️"};
   const sc=useMemo(()=>detail?scaleIng(detail.ingredients,diners):[],[detail,diners]);
 
-  const openCountry=useCallback((c)=>{setCountry(c);setScreen("menu");},[]);
+  const openCountry=useCallback((c: Country)=>{setCountry(c);setCourseFilter("all");setScreen("menu");},[]);
   const openDish = useCallback(async (d: MenuItem) => {
     const ck = `${country!.code}:${d.rank}`;
     setDish(d); setDetail(null); setScreen("dish");
@@ -412,66 +439,17 @@ export default function App() {
     setDetailLoading(false);
   }, [country]);
 
-  const shareUrl="https://claude.ai/artifacts";
-  const shareText=country?`Explore authentic ${country.name} dishes — Global Menu Explorer`:"Explore authentic dishes from 12 countries — Global Menu Explorer";
-  const encText=encodeURIComponent(shareText),encUrl=encodeURIComponent(shareUrl);
-  const socials=[
-    {label:"WhatsApp",color:"#25D366",href:`https://wa.me/?text=${encText}%20${encUrl}`},
-    {label:"Twitter / X",color:"#000",href:`https://twitter.com/intent/tweet?text=${encText}&url=${encUrl}`},
-    {label:"Facebook",color:"#1877F2",href:`https://www.facebook.com/sharer/sharer.php?u=${encUrl}`},
-    {label:"Email",color:"#444",href:`mailto:?subject=Global Menu Explorer&body=${encText}%20${encUrl}`},
-  ];
-  function handleCopy(): void {
-    const confirm = () => { setCopied(true); setTimeout(() => setCopied(false), 2200); };
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(shareUrl).then(confirm).catch(() => {});
-    } else {
-      // Fallback for contexts where the Clipboard API is unavailable.
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = shareUrl; ta.style.cssText = "position:fixed;opacity:0";
-        document.body.appendChild(ta); ta.select();
-        document.execCommand("copy"); document.body.removeChild(ta);
-        confirm();
-      } catch { /* clipboard unavailable */ }
-    }
-  }
-
-  // ── Share modal ───────────────────────────────────────────────────────────
-  function ShareModal(){return(
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000}} onClick={e=>{if(e.target===e.currentTarget)setShowShare(false);}}>
-      <div style={{background:"#0f0f0f",border:"1px solid #2a2a2a",borderRadius:4,padding:"2rem",maxWidth:340,width:"92%"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1.25rem"}}>
-          <p style={{fontSize:12,letterSpacing:"0.2em",textTransform:"uppercase",color:T.gold,margin:0}}>share this app</p>
-          <button onClick={()=>setShowShare(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:18,color:T.muted,lineHeight:1}}>×</button>
-        </div>
-        <p style={{fontSize:14,color:T.muted,margin:"0 0 1.25rem",lineHeight:1.6,fontWeight:300}}>{shareText}</p>
-        <div style={{display:"flex",gap:8,marginBottom:"1rem",background:"#0a0a0a",border:"1px solid #2a2a2a",borderRadius:2,padding:"8px 12px",alignItems:"center"}}>
-          <span style={{flex:1,fontSize:12,color:T.muted,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis",fontWeight:300}}>{shareUrl}</span>
-          <button onClick={handleCopy} style={{flexShrink:0,padding:"5px 12px",background:copied?"#1a2a1a":"transparent",border:`1px solid ${copied?"#2a5a2a":"#3a3a3a"}`,cursor:"pointer",fontSize:12,color:copied?"#5a9a5a":T.muted,letterSpacing:"0.05em"}}>{copied?"✓ copied":"copy"}</button>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          {socials.map(s=>(<a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-            style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"10px",border:"1px solid #2a2a2a",borderRadius:2,color:T.muted,textDecoration:"none",fontSize:12,letterSpacing:"0.05em",background:"transparent",transition:"border-color 0.15s"}}>
-            {s.label}
-          </a>))}
-        </div>
-      </div>
-    </div>
-  );}
 
   const baseStyle = {fontFamily:"'Inter',sans-serif",color:T.white,maxWidth:720,margin:"0 auto",background:T.black,minHeight:"100vh"};
 
   // ── HOME ──────────────────────────────────────────────────────────────────
   if(screen==="home") return(
     <div style={baseStyle}>
-{showShare&&<ShareModal/>}
-      {showCW&&<SpinWheel items={COUNTRIES} label="name" onResult={c=>{setShowCW(false);openCountry(c);}} onClose={()=>setShowCW(false)}/>}
+{showCW&&<SpinWheel items={COUNTRIES} label="name" onResult={c=>{setShowCW(false);openCountry(c);}} onClose={()=>setShowCW(false)}/>}
 
       {/* Hero */}
       <div style={{padding:"3.5rem 2rem 3rem",borderBottom:"1px solid #1e1e1e",position:"relative"}}>
-        <div style={{position:"absolute",top:20,right:20}}><GhostBtn onClick={()=>setShowShare(true)}>Share</GhostBtn></div>
-        <p style={{fontSize:12,letterSpacing:"0.25em",textTransform:"uppercase",color:T.gold,margin:"0 0 1rem",fontWeight:400}}>Global Menu Explorer</p>
+<p style={{fontSize:12,letterSpacing:"0.25em",textTransform:"uppercase",color:T.gold,margin:"0 0 1rem",fontWeight:400}}>Global Menu Explorer</p>
         <h1 className="fd" style={{fontSize:52,fontWeight:400,color:T.white,margin:"0 0 1rem",lineHeight:1.05,letterSpacing:"-0.02em"}}>Discover the world<br/><span className="fi" style={{color:T.muted}}>through its food</span></h1>
         <p style={{fontSize:17,color:T.muted,margin:"0 0 2rem",fontWeight:300,maxWidth:440,lineHeight:1.65}}>Explore 600 authentic dishes from 12 countries, with recipes and preparation guides.</p>
         <button onClick={()=>setShowCW(true)} style={{background:"transparent",border:"1px solid #c9a96e",borderRadius:2,padding:"10px 24px",color:T.gold,fontSize:12,fontWeight:400,cursor:"pointer",letterSpacing:"0.15em",textTransform:"uppercase"}}>
@@ -514,8 +492,7 @@ export default function App() {
   // ── MENU ──────────────────────────────────────────────────────────────────
   if(screen==="menu") return(
     <div style={baseStyle}>
-{showShare&&<ShareModal/>}
-      {showDW&&<SpinWheel items={menu} label="local" onResult={d=>{setShowDW(false);openDish(d);}} onClose={()=>setShowDW(false)}/>}
+{showDW&&<SpinWheel items={menu} label="local" onResult={d=>{setShowDW(false);openDish(d);}} onClose={()=>setShowDW(false)}/>}
 
       {/* Header */}
       <div style={{padding:"1.25rem 1.5rem",borderBottom:"1px solid #1e1e1e",display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,background:T.black,zIndex:10}}>
@@ -530,14 +507,26 @@ export default function App() {
         </div>
         <div style={{display:"flex",gap:8}}>
           <GhostBtn onClick={()=>setShowDW(true)}>✦ Pick</GhostBtn>
-          <GhostBtn onClick={()=>setShowShare(true)}>Share</GhostBtn>
         </div>
       </div>
 
-      <div style={{padding:"1.5rem",paddingTop:"1rem"}}>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:1}}>
-          {menu.map(item=><MenuCard key={item.rank} item={item} onClick={()=>openDish(item)}/>)}
-        </div>
+      {/* Course filter */}
+      <div style={{display:"flex",gap:1,padding:"0 1.5rem 1.25rem",paddingTop:"1rem"}}>
+        {(["all","starter","main","dessert"] as const).map(c=>(
+          <button key={c} onClick={()=>setCourseFilter(c)}
+            style={{flex:1,padding:"9px 4px",background:courseFilter===c?T.gold:"transparent",border:`1px solid ${courseFilter===c?T.gold:"#2a2a2a"}`,cursor:"pointer",fontSize:12,color:courseFilter===c?T.black:T.muted,letterSpacing:"0.08em",textTransform:"capitalize",transition:"background 0.15s,border-color 0.15s"}}>
+            {c}
+          </button>
+        ))}
+      </div>
+
+      <div style={{padding:"0 1.5rem 1.5rem"}}>
+        {filteredMenu.length===0
+          ? <p style={{textAlign:"center",color:T.muted,fontSize:14,padding:"3rem 0",fontWeight:300}}>No {courseFilter}s in this cuisine</p>
+          : <div style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:1}}>
+              {filteredMenu.map(item=><MenuCard key={item.rank} item={item} onClick={()=>openDish(item)}/>)}
+            </div>
+        }
       </div>
     </div>
   );
@@ -555,7 +544,6 @@ export default function App() {
           <FlagSVG code={country.code}/>
         </div>
         <p style={{flex:1,fontSize:13,color:T.muted,margin:0,fontWeight:300}}>{country.name}</p>
-        <GhostBtn onClick={()=>setShowShare(true)}>Share</GhostBtn>
       </div>
 
       {/* Hero dish */}

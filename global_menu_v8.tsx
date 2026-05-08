@@ -60,8 +60,8 @@ const T = {
   offBlack:"#111111",
   ink:     "#1a1a1a",
   charcoal:"#2a2a2a",
-  mid:     "#555555",
-  muted:   "#888888",
+  mid:     "#777777",
+  muted:   "#aaaaaa",
   rule:    "#e0e0e0",
   ruleLight:"#efefef",
   cream:   "#f9f7f4",
@@ -313,22 +313,22 @@ function SpinWheel({ items, onResult, onClose, label = "name" }: SpinWheelProps)
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
       <div style={{background:"#0f0f0f",border:"1px solid #2a2a2a",borderRadius:4,padding:"2rem",maxWidth:360,width:"93%",textAlign:"center"}}>
-        <p style={{fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase",color:T.muted,margin:"0 0 1.25rem"}}>spin to discover</p>
+        <p style={{fontSize:12,letterSpacing:"0.2em",textTransform:"uppercase",color:T.muted,margin:"0 0 1.25rem"}}>spin to discover</p>
         <canvas ref={cvs} width={280} height={280} style={{borderRadius:"50%",border:"1px solid #2a2a2a"}}/>
         {winner&&(
           <div style={{margin:"1.5rem 0 0.75rem",padding:"1rem 1.25rem",background:"#0a0a0a",border:"1px solid #2a2a2a",borderRadius:2}}>
-            <p style={{fontSize:10,letterSpacing:"0.15em",textTransform:"uppercase",color:T.gold,margin:"0 0 6px"}}>your selection</p>
+            <p style={{fontSize:12,letterSpacing:"0.15em",textTransform:"uppercase",color:T.gold,margin:"0 0 6px"}}>your selection</p>
             <p className="fd" style={{fontSize:22,fontWeight:400,color:T.white,margin:0,lineHeight:1.2}}>{winner[label]||""}</p>
-            {winner.english&&winner.english!==(winner[label]||"")&&<p style={{fontSize:12,color:T.muted,margin:"4px 0 0",fontWeight:300}}>{winner.english}</p>}
+            {winner.english&&winner.english!==(winner[label]||"")&&<p style={{fontSize:13,color:T.muted,margin:"4px 0 0",fontWeight:300}}>{winner.english}</p>}
           </div>
         )}
         <div style={{display:"flex",gap:8,marginTop:"1.25rem"}}>
-          <button onClick={onClose} style={{flex:1,padding:"10px",background:"transparent",border:"1px solid #2a2a2a",cursor:"pointer",fontSize:12,color:T.muted,letterSpacing:"0.05em"}}>Cancel</button>
+          <button onClick={onClose} style={{flex:1,padding:"10px",background:"transparent",border:"1px solid #2a2a2a",cursor:"pointer",fontSize:13,color:T.muted,letterSpacing:"0.05em"}}>Cancel</button>
           {winner
-            ?<button onClick={()=>onResult(winner)} style={{flex:2,padding:"10px",background:T.gold,border:"none",cursor:"pointer",fontSize:12,color:T.black,fontWeight:500,letterSpacing:"0.08em"}}>EXPLORE DISH →</button>
-            :<button onClick={spin} disabled={spinning} style={{flex:2,padding:"10px",background:spinning?"#222":T.gold,border:"none",cursor:spinning?"not-allowed":"pointer",fontSize:12,color:spinning?T.muted:T.black,fontWeight:500,letterSpacing:"0.08em"}}>{spinning?"SPINNING…":"SPIN"}</button>}
+            ?<button onClick={()=>onResult(winner)} style={{flex:2,padding:"10px",background:T.gold,border:"none",cursor:"pointer",fontSize:13,color:T.black,fontWeight:500,letterSpacing:"0.08em"}}>EXPLORE DISH →</button>
+            :<button onClick={spin} disabled={spinning} style={{flex:2,padding:"10px",background:spinning?"#222":T.gold,border:"none",cursor:spinning?"not-allowed":"pointer",fontSize:13,color:spinning?T.muted:T.black,fontWeight:500,letterSpacing:"0.08em"}}>{spinning?"SPINNING…":"SPIN"}</button>}
         </div>
-        {winner&&<button onClick={spin} style={{marginTop:8,width:"100%",padding:"8px",background:"transparent",border:"none",cursor:"pointer",fontSize:11,color:T.muted,letterSpacing:"0.05em"}}>spin again</button>}
+        {winner&&<button onClick={spin} style={{marginTop:8,width:"100%",padding:"8px",background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:T.muted,letterSpacing:"0.05em"}}>spin again</button>}
       </div>
     </div>
   );
@@ -347,13 +347,13 @@ const MenuCard = memo(function MenuCard({ item, onClick }: MenuCardProps) {
       {/* Visual area */}
       <div style={{width:"100%",paddingTop:"55%",position:"relative",background:"#0d0d0d",borderBottom:"1px solid #1e1e1e"}}>
         <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:44,opacity:0.7}}>{icon}</div>
-        <div style={{position:"absolute",top:10,left:10,fontSize:10,letterSpacing:"0.1em",color:T.gold,fontWeight:400}}>{String(item.rank).padStart(2,"0")}</div>
-        {item.prep&&<div style={{position:"absolute",bottom:10,right:10,fontSize:9,letterSpacing:"0.08em",color:T.muted,fontWeight:300}}>{item.prep}</div>}
+        <div style={{position:"absolute",top:10,left:10,fontSize:12,letterSpacing:"0.1em",color:T.gold,fontWeight:400}}>{String(item.rank).padStart(2,"0")}</div>
+        {item.prep&&<div style={{position:"absolute",bottom:10,right:10,fontSize:11,letterSpacing:"0.08em",color:T.muted,fontWeight:300}}>{item.prep}</div>}
       </div>
       {/* Text area */}
       <div style={{padding:"14px 16px 16px"}}>
-        <p style={{fontSize:15,fontWeight:400,color:T.white,margin:"0 0 4px",overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",lineHeight:1.35}}>{item.local}</p>
-        {item.english!==item.local&&<p style={{fontSize:12,color:T.muted,margin:0,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis",fontWeight:300,letterSpacing:"0.02em"}}>{item.english}</p>}
+        <p style={{fontSize:16,fontWeight:400,color:T.white,margin:"0 0 4px",overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",lineHeight:1.35}}>{item.local}</p>
+        {item.english!==item.local&&<p style={{fontSize:13,color:T.muted,margin:0,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis",fontWeight:300,letterSpacing:"0.02em"}}>{item.english}</p>}
       </div>
     </button>
   );
@@ -365,7 +365,7 @@ interface GhostBtnProps { onClick: () => void; children: React.ReactNode; }
 /** Lightweight translucent nav button used across all screens. */
 function GhostBtn({ onClick, children }: GhostBtnProps) {
   return (
-    <button onClick={onClick} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.18)",borderRadius:2,padding:"5px 14px",cursor:"pointer",fontSize:11,color:"rgba(255,255,255,0.7)",letterSpacing:"0.08em",whiteSpace:"nowrap",transition:"border-color 0.15s"}}>
+    <button onClick={onClick} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.18)",borderRadius:2,padding:"5px 14px",cursor:"pointer",fontSize:12,color:"rgba(255,255,255,0.85)",letterSpacing:"0.08em",whiteSpace:"nowrap",transition:"border-color 0.15s"}}>
       {children}
     </button>
   );
@@ -442,17 +442,17 @@ export default function App() {
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000}} onClick={e=>{if(e.target===e.currentTarget)setShowShare(false);}}>
       <div style={{background:"#0f0f0f",border:"1px solid #2a2a2a",borderRadius:4,padding:"2rem",maxWidth:340,width:"92%"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1.25rem"}}>
-          <p style={{fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase",color:T.gold,margin:0}}>share this app</p>
+          <p style={{fontSize:12,letterSpacing:"0.2em",textTransform:"uppercase",color:T.gold,margin:0}}>share this app</p>
           <button onClick={()=>setShowShare(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:18,color:T.muted,lineHeight:1}}>×</button>
         </div>
-        <p style={{fontSize:13,color:T.muted,margin:"0 0 1.25rem",lineHeight:1.6,fontWeight:300}}>{shareText}</p>
+        <p style={{fontSize:14,color:T.muted,margin:"0 0 1.25rem",lineHeight:1.6,fontWeight:300}}>{shareText}</p>
         <div style={{display:"flex",gap:8,marginBottom:"1rem",background:"#0a0a0a",border:"1px solid #2a2a2a",borderRadius:2,padding:"8px 12px",alignItems:"center"}}>
-          <span style={{flex:1,fontSize:11,color:T.muted,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis",fontWeight:300}}>{shareUrl}</span>
-          <button onClick={handleCopy} style={{flexShrink:0,padding:"5px 12px",background:copied?"#1a2a1a":"transparent",border:`1px solid ${copied?"#2a5a2a":"#3a3a3a"}`,cursor:"pointer",fontSize:11,color:copied?"#5a9a5a":T.muted,letterSpacing:"0.05em"}}>{copied?"✓ copied":"copy"}</button>
+          <span style={{flex:1,fontSize:12,color:T.muted,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis",fontWeight:300}}>{shareUrl}</span>
+          <button onClick={handleCopy} style={{flexShrink:0,padding:"5px 12px",background:copied?"#1a2a1a":"transparent",border:`1px solid ${copied?"#2a5a2a":"#3a3a3a"}`,cursor:"pointer",fontSize:12,color:copied?"#5a9a5a":T.muted,letterSpacing:"0.05em"}}>{copied?"✓ copied":"copy"}</button>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           {socials.map(s=>(<a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-            style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"10px",border:"1px solid #2a2a2a",borderRadius:2,color:T.muted,textDecoration:"none",fontSize:11,letterSpacing:"0.05em",background:"transparent",transition:"border-color 0.15s"}}>
+            style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"10px",border:"1px solid #2a2a2a",borderRadius:2,color:T.muted,textDecoration:"none",fontSize:12,letterSpacing:"0.05em",background:"transparent",transition:"border-color 0.15s"}}>
             {s.label}
           </a>))}
         </div>
@@ -471,17 +471,17 @@ export default function App() {
       {/* Hero */}
       <div style={{padding:"3.5rem 2rem 3rem",borderBottom:"1px solid #1e1e1e",position:"relative"}}>
         <div style={{position:"absolute",top:20,right:20}}><GhostBtn onClick={()=>setShowShare(true)}>Share</GhostBtn></div>
-        <p style={{fontSize:11,letterSpacing:"0.25em",textTransform:"uppercase",color:T.gold,margin:"0 0 1rem",fontWeight:400}}>Global Menu Explorer</p>
+        <p style={{fontSize:12,letterSpacing:"0.25em",textTransform:"uppercase",color:T.gold,margin:"0 0 1rem",fontWeight:400}}>Global Menu Explorer</p>
         <h1 className="fd" style={{fontSize:52,fontWeight:400,color:T.white,margin:"0 0 1rem",lineHeight:1.05,letterSpacing:"-0.02em"}}>Discover the world<br/><span className="fi" style={{color:T.muted}}>through its food</span></h1>
-        <p style={{fontSize:16,color:T.muted,margin:"0 0 2rem",fontWeight:300,maxWidth:440,lineHeight:1.65}}>Explore 600 authentic dishes from 12 countries, with recipes and preparation guides.</p>
-        <button onClick={()=>setShowCW(true)} style={{background:"transparent",border:"1px solid #c9a96e",borderRadius:2,padding:"10px 24px",color:T.gold,fontSize:11,fontWeight:400,cursor:"pointer",letterSpacing:"0.15em",textTransform:"uppercase"}}>
+        <p style={{fontSize:17,color:T.muted,margin:"0 0 2rem",fontWeight:300,maxWidth:440,lineHeight:1.65}}>Explore 600 authentic dishes from 12 countries, with recipes and preparation guides.</p>
+        <button onClick={()=>setShowCW(true)} style={{background:"transparent",border:"1px solid #c9a96e",borderRadius:2,padding:"10px 24px",color:T.gold,fontSize:12,fontWeight:400,cursor:"pointer",letterSpacing:"0.15em",textTransform:"uppercase"}}>
           ✦ Let the wheel decide
         </button>
       </div>
 
       {/* Country grid */}
       <div style={{padding:"2rem"}}>
-        <p style={{fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase",color:T.muted,margin:"0 0 1.5rem",fontWeight:400}}>Select a country</p>
+        <p style={{fontSize:12,letterSpacing:"0.2em",textTransform:"uppercase",color:T.muted,margin:"0 0 1.5rem",fontWeight:400}}>Select a country</p>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:1}}>
           {COUNTRIES.map((c)=>(
             <button key={c.code} onClick={()=>openCountry(c)}
@@ -498,12 +498,12 @@ export default function App() {
                   </div>
                 </div>
                 {/* Country code watermark */}
-                <p className="fd" style={{position:"absolute",bottom:8,right:10,fontSize:11,color:"rgba(255,255,255,0.2)",margin:0,letterSpacing:"0.1em",fontStyle:"italic"}}>{c.code}</p>
+                <p className="fd" style={{position:"absolute",bottom:8,right:10,fontSize:12,color:"rgba(255,255,255,0.2)",margin:0,letterSpacing:"0.1em",fontStyle:"italic"}}>{c.code}</p>
               </div>
               {/* Label */}
               <div style={{padding:"12px 14px 14px",borderTop:"1px solid #1a1a1a"}}>
-                <p style={{fontSize:15,fontWeight:400,color:T.white,margin:"0 0 3px",letterSpacing:"-0.01em"}}>{c.name}</p>
-                <p style={{fontSize:11,color:T.muted,margin:0,fontWeight:300,letterSpacing:"0.04em"}}>{c.lang}</p>
+                <p style={{fontSize:16,fontWeight:400,color:T.white,margin:"0 0 3px",letterSpacing:"-0.01em"}}>{c.name}</p>
+                <p style={{fontSize:12,color:T.muted,margin:0,fontWeight:300,letterSpacing:"0.04em"}}>{c.lang}</p>
               </div>
             </button>
           ))}
@@ -520,14 +520,14 @@ export default function App() {
 
       {/* Header */}
       <div style={{padding:"1.25rem 1.5rem",borderBottom:"1px solid #1e1e1e",display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,background:T.black,zIndex:10}}>
-        <button onClick={()=>setScreen("home")} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:11,color:T.muted,letterSpacing:"0.05em",padding:"4px 0",flexShrink:0}}>← Back</button>
+        <button onClick={()=>setScreen("home")} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:T.muted,letterSpacing:"0.05em",padding:"4px 0",flexShrink:0}}>← Back</button>
         <div style={{width:1,height:20,background:"#2a2a2a",flexShrink:0}}/>
         <div style={{width:36,height:22,borderRadius:1,overflow:"hidden",flexShrink:0,opacity:0.9}}>
           <FlagSVG code={country.code}/>
         </div>
         <div style={{flex:1,minWidth:0}}>
-          <p style={{fontSize:14,fontWeight:400,margin:0,color:T.white,letterSpacing:"-0.01em"}}>{country.name}</p>
-          <p style={{fontSize:10,color:T.muted,margin:0,letterSpacing:"0.05em"}}>Top {menu.length} dishes by popularity</p>
+          <p style={{fontSize:15,fontWeight:400,margin:0,color:T.white,letterSpacing:"-0.01em"}}>{country.name}</p>
+          <p style={{fontSize:12,color:T.muted,margin:0,letterSpacing:"0.05em"}}>Top {menu.length} dishes by popularity</p>
         </div>
         <div style={{display:"flex",gap:8}}>
           <GhostBtn onClick={()=>setShowDW(true)}>✦ Pick</GhostBtn>
@@ -550,12 +550,12 @@ export default function App() {
 
       {/* Header */}
       <div style={{padding:"1.25rem 1.5rem",borderBottom:"1px solid #1e1e1e",display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,background:T.black,zIndex:10}}>
-        <button onClick={()=>setScreen("menu")} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:11,color:T.muted,letterSpacing:"0.05em",padding:"4px 0"}}>← Menu</button>
+        <button onClick={()=>setScreen("menu")} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:12,color:T.muted,letterSpacing:"0.05em",padding:"4px 0"}}>← Menu</button>
         <div style={{width:1,height:20,background:"#2a2a2a"}}/>
         <div style={{width:36,height:22,borderRadius:1,overflow:"hidden",opacity:0.9}}>
           <FlagSVG code={country.code}/>
         </div>
-        <p style={{flex:1,fontSize:12,color:T.muted,margin:0,fontWeight:300}}>{country.name}</p>
+        <p style={{flex:1,fontSize:13,color:T.muted,margin:0,fontWeight:300}}>{country.name}</p>
         <GhostBtn onClick={()=>setShowShare(true)}>Share</GhostBtn>
       </div>
 
@@ -565,29 +565,29 @@ export default function App() {
           {dishIcon}
         </div>
         <div style={{flex:1}}>
-          <p style={{fontSize:11,letterSpacing:"0.15em",textTransform:"uppercase",color:T.gold,margin:"0 0 10px",fontWeight:400}}>{country.name} · #{dish.rank}</p>
+          <p style={{fontSize:12,letterSpacing:"0.15em",textTransform:"uppercase",color:T.gold,margin:"0 0 10px",fontWeight:400}}>{country.name} · #{dish.rank}</p>
           <h2 className="fd" style={{fontSize:36,fontWeight:400,margin:"0 0 6px",color:T.white,lineHeight:1.1,letterSpacing:"-0.01em"}}>{dish.local}</h2>
-          {dish.english!==dish.local&&<p style={{fontSize:16,color:T.muted,margin:0,fontWeight:300}}>{dish.english}</p>}
+          {dish.english!==dish.local&&<p style={{fontSize:17,color:T.muted,margin:0,fontWeight:300}}>{dish.english}</p>}
         </div>
       </div>
 
       {detailLoading&&(
         <div style={{textAlign:"center",padding:"3rem",color:T.muted}}>
-          <p style={{fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase"}}>loading recipe…</p>
+          <p style={{fontSize:12,letterSpacing:"0.2em",textTransform:"uppercase"}}>loading recipe…</p>
         </div>
       )}
 
       {detail&&(
         <div style={{padding:"2rem"}}>
           {/* Description */}
-          <p style={{fontSize:15,lineHeight:1.75,color:T.muted,margin:"0 0 2rem",fontWeight:300,borderLeft:`2px solid ${T.gold}`,paddingLeft:"1rem"}}>{detail.description}</p>
+          <p style={{fontSize:16,lineHeight:1.75,color:T.muted,margin:"0 0 2rem",fontWeight:300,borderLeft:`2px solid ${T.gold}`,paddingLeft:"1rem"}}>{detail.description}</p>
 
           {/* Stats row */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1,marginBottom:"2rem",border:"1px solid #1e1e1e"}}>
             {[["Prep",detail.prep_time],["Cook",detail.cook_time],["Serves",`${diners} ${diners===1?"person":"people"}`]].map(([lbl,val])=>(
               <div key={lbl} style={{padding:"1rem",background:"#0d0d0d",textAlign:"center"}}>
-                <p style={{fontSize:9,letterSpacing:"0.15em",textTransform:"uppercase",color:T.muted,margin:"0 0 6px",fontWeight:400}}>{lbl}</p>
-                <p style={{fontSize:15,fontWeight:400,color:T.white,margin:0}}>{val}</p>
+                <p style={{fontSize:11,letterSpacing:"0.15em",textTransform:"uppercase",color:T.muted,margin:"0 0 6px",fontWeight:400}}>{lbl}</p>
+                <p style={{fontSize:16,fontWeight:400,color:T.white,margin:0}}>{val}</p>
               </div>
             ))}
           </div>
@@ -595,11 +595,11 @@ export default function App() {
           {/* Ingredients */}
           <div style={{marginBottom:"2rem"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1rem",paddingBottom:"0.75rem",borderBottom:"1px solid #1e1e1e"}}>
-              <p style={{fontSize:10,letterSpacing:"0.15em",textTransform:"uppercase",color:T.gold,margin:0}}>Ingredients</p>
+              <p style={{fontSize:12,letterSpacing:"0.15em",textTransform:"uppercase",color:T.gold,margin:0}}>Ingredients</p>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <span style={{fontSize:11,color:T.muted,fontWeight:300}}>Diners</span>
+                <span style={{fontSize:12,color:T.muted,fontWeight:300}}>Diners</span>
                 <select value={diners} onChange={e=>setDiners(Number(e.target.value))}
-                  style={{fontSize:12,padding:"4px 8px",background:"#111",border:"1px solid #2a2a2a",borderRadius:2,color:T.white,cursor:"pointer",fontFamily:"inherit"}}>
+                  style={{fontSize:13,padding:"4px 8px",background:"#111",border:"1px solid #2a2a2a",borderRadius:2,color:T.white,cursor:"pointer",fontFamily:"inherit"}}>
                   {Array.from({length:20},(_,i)=>i+1).map(n=><option key={n} value={n}>{n}</option>)}
                 </select>
               </div>
@@ -607,18 +607,18 @@ export default function App() {
             {(sc ?? []).map((ing,i)=>(
               <div key={i} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"8px 0",borderBottom:i<sc.length-1?"1px solid #141414":"none"}}>
                 <span style={{width:4,height:4,borderRadius:"50%",background:T.gold,marginTop:7,flexShrink:0}}/>
-                <span style={{fontSize:14,color:T.muted,lineHeight:1.5,fontWeight:300}}>{ing}</span>
+                <span style={{fontSize:15,color:T.muted,lineHeight:1.5,fontWeight:300}}>{ing}</span>
               </div>
             ))}
           </div>
 
           {/* Method */}
           <div>
-            <p style={{fontSize:10,letterSpacing:"0.15em",textTransform:"uppercase",color:T.gold,margin:"0 0 1rem",paddingBottom:"0.75rem",borderBottom:"1px solid #1e1e1e"}}>Method</p>
+            <p style={{fontSize:12,letterSpacing:"0.15em",textTransform:"uppercase",color:T.gold,margin:"0 0 1rem",paddingBottom:"0.75rem",borderBottom:"1px solid #1e1e1e"}}>Method</p>
             {(detail.steps ?? []).map((step,i)=>(
               <div key={i} style={{display:"flex",gap:16,marginBottom:"1.25rem",alignItems:"flex-start"}}>
-                <span className="fd" style={{fontSize:20,color:"#2a2a2a",flexShrink:0,lineHeight:1.2,minWidth:24,textAlign:"right"}}>{i+1}</span>
-                <p style={{fontSize:14,color:T.muted,margin:0,lineHeight:1.75,fontWeight:300,flex:1}}>{step.replace(/^Step \d+:\s*/i,"")}</p>
+                <span className="fd" style={{fontSize:20,color:"#666666",flexShrink:0,lineHeight:1.2,minWidth:24,textAlign:"right"}}>{i+1}</span>
+                <p style={{fontSize:15,color:T.muted,margin:0,lineHeight:1.75,fontWeight:300,flex:1}}>{step.replace(/^Step \d+:\s*/i,"")}</p>
               </div>
             ))}
           </div>

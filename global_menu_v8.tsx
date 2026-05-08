@@ -160,34 +160,73 @@ const MENU_DATA: Record<string, MenuItem[]> = {
   ],
 };
 
-/** In-memory recipe cache keyed by "{countryCode}:{dishRank}". Cleared on page reload. */
+/** In-session recipe cache keyed by "{countryCode}:{dishRank}". */
 const recipeCache = new Map<string, RecipeDetail>();
 
-// ── API ───────────────────────────────────────────────────────────────────────
-// WARNING: calling the Anthropic API directly from the browser exposes your API
-// key and rate limits to all users. Move apiFetch to a backend/serverless
-// function before shipping to production.
-const API_HEADERS = {
-  "Content-Type": "application/json",
-  "anthropic-version": "2023-06-01",
-  "anthropic-dangerous-direct-browser-access": "true",
-};
+// ── TheMealDB integration ─────────────────────────────────────────────────────
+// Free public API — no key required, CORS enabled.
+// https://www.themealdb.com/api.php
 
-async function apiFetch(prompt: string, maxTok: number): Promise<string> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: API_HEADERS,
-    body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: maxTok, messages: [{ role: "user", content: prompt }] }),
-  });
-  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error((e as {error?: {message?: string}})?.error?.message || "HTTP " + res.status); }
-  return (await res.json()).content.map((b: {text?: string}) => b.text || "").join("");
+interface MealDBMeal {
+  strMeal: string;
+  strInstructions: string;
+  strArea: string;
+  [key: string]: string;
 }
 
-/** Extracts the first complete JSON object from a string, tolerating markdown fences. */
-function extractJSON(txt: string): RecipeDetail {
-  const s = txt.indexOf("{"), e = txt.lastIndexOf("}");
-  if (s < 0 || e < 0) throw new Error("No JSON found in response");
-  return JSON.parse(txt.slice(s, e + 1)) as RecipeDetail;
+/** Maps a TheMealDB meal object to our RecipeDetail shape. */
+function mealToRecipe(meal: MealDBMeal, dish: MenuItem): RecipeDetail {
+  const ingredients: string[] = [];
+  for (let i = 1; i <= 20; i++) {
+    const name    = meal[`strIngredient${i}`]?.trim();
+    const measure = meal[`strMeasure${i}`]?.trim();
+    if (name) ingredients.push(measure ? `${measure} ${name}` : name);
+  }
+
+  const paras = meal.strInstructions
+    .split(/\r?\n+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 30);
+
+  const steps = paras.length >= 3
+    ? paras.slice(0, 6)
+    : meal.strInstructions.split(/(?<=\.)\s+/).filter(s => s.length > 20).slice(0, 6);
+
+  const desc = meal.strInstructions.split(/(?<=\.)\s+/).slice(0, 2).join(" ");
+
+  return {
+    description: desc || `A classic ${meal.strArea} dish.`,
+    ingredients: ingredients.slice(0, 10),
+    prep_time:   dish.prep || "-",
+    cook_time:   "-",
+    steps,
+  };
+}
+
+/** Fetches a recipe from TheMealDB, trying progressively shorter search terms. */
+async function fetchRecipe(dish: MenuItem): Promise<RecipeDetail> {
+  const attempts = [
+    dish.english,
+    dish.english.split(" ").slice(0, 3).join(" "),
+    dish.english.split(" ").slice(0, 2).join(" "),
+  ];
+
+  for (const term of attempts) {
+    const res = await fetch(
+      `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(term)}`
+    );
+    if (!res.ok) continue;
+    const data = await res.json();
+    if (data.meals?.length) return mealToRecipe(data.meals[0] as MealDBMeal, dish);
+  }
+
+  return {
+    description: `${dish.english} is a beloved dish. Full recipe details are not yet available in our database.`,
+    ingredients: [],
+    prep_time:   dish.prep || "-",
+    cook_time:   "-",
+    steps:       [],
+  };
 }
 
 function scaleIng(ings: string[], srv: number): string[] {
@@ -349,13 +388,11 @@ export default function App() {
   const [detail, setDetail] = useState<RecipeDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [diners, setDiners] = useState(4);
+  const activeFetchRef = useRef<string | null>(null);
   const [showCW, setShowCW] = useState(false);
   const [showDW, setShowDW] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  // Tracks the cache key of the in-flight recipe request; used to discard stale responses.
-  const activeFetchRef = useRef<string | null>(null);
 
   const menu=useMemo(()=>country?(MENU_DATA[country.code]||[]):[],[country]);
   const {icon:dishIcon}=dish?getDishStyle(dish.local,dish.english):{icon:"🍽️"};
@@ -363,19 +400,15 @@ export default function App() {
 
   const openCountry=useCallback((c)=>{setCountry(c);setScreen("menu");},[]);
   const openDish = useCallback(async (d: MenuItem) => {
-    setDish(d); setDetail(null); setDetailLoading(true); setScreen("dish");
     const ck = `${country!.code}:${d.rank}`;
+    setDish(d); setDetail(null); setScreen("dish");
+    if (recipeCache.has(ck)) { setDetail(recipeCache.get(ck)!); return; }
+    setDetailLoading(true);
     activeFetchRef.current = ck;
-    if (recipeCache.has(ck)) { setDetail(recipeCache.get(ck)!); setDetailLoading(false); return; }
-    try {
-      const raw = await apiFetch(`BBC Good Food style recipe for "${d.english}" (${d.local}) from ${country!.name}. Return ONLY a JSON object, no markdown: {"description":"2 sentences","ingredients":["qty ingredient",...max 10],"prep_time":"X mins","cook_time":"X mins","steps":["step",...max 6]}`, 1200);
-      // Discard response if the user navigated to a different dish while this was in flight.
-      if (activeFetchRef.current !== ck) return;
-      const parsed = extractJSON(raw); recipeCache.set(ck, parsed); setDetail(parsed);
-    } catch {
-      if (activeFetchRef.current !== ck) return;
-      setDetail({ description: "Could not load recipe.", ingredients: [], prep_time: d.prep || "-", cook_time: "-", steps: [] });
-    }
+    const recipe = await fetchRecipe(d);
+    if (activeFetchRef.current !== ck) return;
+    recipeCache.set(ck, recipe);
+    setDetail(recipe);
     setDetailLoading(false);
   }, [country]);
 
@@ -432,7 +465,7 @@ export default function App() {
   // ── HOME ──────────────────────────────────────────────────────────────────
   if(screen==="home") return(
     <div style={baseStyle}>
-      {showShare&&<ShareModal/>}
+{showShare&&<ShareModal/>}
       {showCW&&<SpinWheel items={COUNTRIES} label="name" onResult={c=>{setShowCW(false);openCountry(c);}} onClose={()=>setShowCW(false)}/>}
 
       {/* Hero */}
@@ -482,7 +515,7 @@ export default function App() {
   // ── MENU ──────────────────────────────────────────────────────────────────
   if(screen==="menu") return(
     <div style={baseStyle}>
-      {showShare&&<ShareModal/>}
+{showShare&&<ShareModal/>}
       {showDW&&<SpinWheel items={menu} label="local" onResult={d=>{setShowDW(false);openDish(d);}} onClose={()=>setShowDW(false)}/>}
 
       {/* Header */}
@@ -513,7 +546,7 @@ export default function App() {
   // ── DISH ──────────────────────────────────────────────────────────────────
   if(screen==="dish") return(
     <div style={baseStyle}>
-      {showShare&&<ShareModal/>}
+{showShare&&<ShareModal/>}
 
       {/* Header */}
       <div style={{padding:"1.25rem 1.5rem",borderBottom:"1px solid #1e1e1e",display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,background:T.black,zIndex:10}}>
@@ -540,7 +573,7 @@ export default function App() {
 
       {detailLoading&&(
         <div style={{textAlign:"center",padding:"3rem",color:T.muted}}>
-          <p style={{fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase"}}>preparing recipe…</p>
+          <p style={{fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase"}}>loading recipe…</p>
         </div>
       )}
 

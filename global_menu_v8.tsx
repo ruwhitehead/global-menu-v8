@@ -502,8 +502,7 @@ export default function App() {
               </div>
               {/* Label */}
               <div style={{padding:"12px 14px 14px",borderTop:"1px solid #1a1a1a"}}>
-                <p style={{fontSize:16,fontWeight:400,color:T.white,margin:"0 0 3px",letterSpacing:"-0.01em"}}>{c.name}</p>
-                <p style={{fontSize:12,color:T.muted,margin:0,fontWeight:300,letterSpacing:"0.04em"}}>{c.lang}</p>
+                <p style={{fontSize:16,fontWeight:400,color:T.white,margin:0,letterSpacing:"-0.01em"}}>{c.name}</p>
               </div>
             </button>
           ))}
